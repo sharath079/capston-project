@@ -1,144 +1,97 @@
 # Zepto Data & AI Platform
 
-This repository contains the **Zepto Data & AI Platform** capstone project, built as a single connected system with three modules:
+This capstone repository contains three modules:
 
-- `/data_pipeline` — Scraping, cleaning, and storing catalog-style data in SQLite.
-- `/analytics` — Titanic dataset profiling, EDA, and predictive modeling.
-- `/support_assistant` — GenAI-powered support assistant with LangGraph + FastAPI.
+- `zepto-data-ai-platform\data_pipeline` - scrape book listings, clean the data, and store it in SQLite.
+- `zepto-data-ai-platform\analytics` - explore and model the Titanic dataset in Jupyter notebooks.
+- `zepto-data-ai-platform\support_assistant` - run a FastAPI support assistant in mock mode.
 
----
+## Run on Windows
 
-## Setup Instructions
+The commands below are for PowerShell. Start in the repository root: the directory containing this `README.md` and the `zepto-data-ai-platform` folder. If needed, change to that directory first:
 
-### Requirements
-You may use either:
-- One consolidated `requirements.txt` at the root, or
-- Separate `requirements.txt` files per module.
-
-Example consolidated requirements:
-
-requests
-beautifulsoup4
-pandas
-seaborn
-matplotlib
-scikit-learn
-imbalanced-learn
-joblib
-sentence-transformers
-chromadb
-fastapi
-uvicorn
-langgraph
-
-Install dependencies:
-```bash
-pip install -r requirements.txt
+```powershell
+cd "D:\path\to\your\cloned-repository"
 ```
 
-`sqlite3` is included with Python and does not need to be installed separately.
+### 1. Install Python dependencies
 
-## Running Each Module
+Check that the Python launcher is installed:
 
-1. Data Pipeline (/data_pipeline)
-Run the scraping + cleaning script:
+```powershell
+py --version
+```
 
-bash
-python data_pipeline/scrape_books.py
-This generates books.db with normalized schema.
+Create a virtual environment, activate it, and install the project dependencies:
 
-Execute SQL queries from queries.sql using sqlite3 or inside the notebook.
+```powershell
+$project = Join-Path (Get-Location) "zepto-data-ai-platform"
+py -m venv "$project\.venv"
+& "$project\.venv\Scripts\Activate.ps1"
+python -m pip install --upgrade pip
+python -m pip install -r "$project\requirements.txt"
+```
 
-Outputs include ≥60 books, cleaned fields, and INR conversion (fixed rate: 1 GBP = 105.50 INR).
+If PowerShell blocks virtual environment activation, allow it for this terminal session and activate again:
 
-2. Analytics Pipeline (/analytics)
-Open 01_eda.ipynb and run all cells:
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+& "$project\.venv\Scripts\Activate.ps1"
+```
 
-Loads Titanic dataset via sns.load_dataset("titanic")
+Keep this PowerShell window open so the virtual environment remains active. If `py` is not recognized, install Python from [python.org](https://www.python.org/downloads/windows/), enable the option to add Python to PATH, then reopen PowerShell.
 
-Saves titanic.csv as offline fallback
+### 2. Run the data pipeline
 
-Profiles, cleans, and performs EDA
+Run both scripts from the data pipeline directory because they read and write files relative to the current directory:
 
-Then run 02_modeling.ipynb:
+```powershell
+Set-Location "$project\data_pipeline"
+python .\scrape_books.py
+python .\clean_store.py
+```
 
-Stratified train/test split
+The scraper writes `raw_books.csv`; the cleaning step writes or updates `books.db`. The fixed conversion rate is 1 GBP = 105.50 INR. The cleaner inserts rows into the database, so rerunning it on an existing database can add duplicate book rows.
 
-Preprocessing pipeline (ColumnTransformer + Pipeline)
+To inspect the SQL examples, open `queries.sql` in this directory or run `pipeline_notebook.ipynb` in VS Code. For more detail, see [the data pipeline guide](zepto-data-ai-platform/data_pipeline/README.md).
 
-Logistic Regression, Decision Tree, Random Forest
+### 3. Run the analytics notebooks
 
-Evaluation metrics, imbalance handling, hyperparameter tuning
+The notebooks need Jupyter support. Install it into the active virtual environment:
 
-Regression side-task (predict fare)
+```powershell
+python -m pip install notebook ipykernel
+Set-Location "$project\analytics"
+python -m notebook
+```
 
-Saves full pipeline with joblib.dump
+In the Jupyter page that opens, run `01_eda.ipynb` first, then `02_modeling.ipynb`. The first notebook downloads the Titanic dataset through Seaborn and saves `titanic.csv`; the second notebook reads that CSV and saves the trained model as `saved_pipeline.joblib`.
 
+Alternatively, open the `analytics` folder in VS Code, choose the active `.venv` as the notebook kernel, and run the notebooks in the same order. The Titanic dataset download requires internet access. See [the analytics guide](zepto-data-ai-platform/analytics/README.md).
 
-3. Support Assistant (/support_assistant)
-Ensure 8 policy documents exist in /support_assistant/docs/.
+### 4. Start the support assistant
 
-Run embedding script:
+In the same PowerShell window, start the API from its module directory:
 
-bash
-python support_assistant/embed_store.py
-Start FastAPI service:
+```powershell
+Set-Location "$project\support_assistant"
+python -m uvicorn app:app --reload
+```
 
-bash
-uvicorn support_assistant.app:app --reload
-Query the assistant:
+Keep this window open while using the API. Open the interactive API page at <http://127.0.0.1:8000/docs>, or try this request in a browser:
 
-Code
-http://127.0.0.1:8000/ask?query="What is Zepto's refund policy?"
+<http://127.0.0.1:8000/ask?query=What%20is%20Zepto%27s%20refund%20policy%3F>
 
-Design Decisions
-Data Pipeline: Chose SQLite for lightweight relational storage; schema normalized with PK/FK between categories and books.
+Stop the server with `Ctrl+C`. The current API uses a deterministic mock response; it does not retrieve live policy content or call a real language model. `embed_store.py` is not required to start or use the current mock API. See [the support assistant guide](zepto-data-ai-platform/support_assistant/README.md).
 
-Analytics: Two-notebook structure ensures single dataset load; strict threshold-based missing value handling; stratified split prevents class imbalance leakage.
+### Start the API without activating the virtual environment
 
-Support Assistant: Deterministic mock mode (MOCK_LLM=1) ensures offline reproducibility; embeddings stored in ChromaDB for fast retrieval; LangGraph orchestrates intent classification, retrieval, and answer generation.
+If the environment is not activated, use its Python executable explicitly. Run these commands from the repository root:
 
-Acceptance Criteria Checklist
-[1] ≥60 books scraped, cleaned, stored in SQLite
+```powershell
+$project = Join-Path (Get-Location) "zepto-data-ai-platform"
+Set-Location "$project\support_assistant"
+& "$project\.venv\Scripts\python.exe" -m uvicorn app:app --reload
+```
 
-[2] INR conversion at fixed baseline rate
-
-[3] ≥5 SQL queries with required clauses + JOIN
-
-[4] Titanic dataset profiled, cleaned, EDA completed
-
-[5] Stratified train/test split, preprocessing pipeline
-
-[6] 3 classifiers trained + evaluated, imbalance handling
-
-[7] Random Forest tuned with GridSearchCV + OOB score
-
-[8] Regression side-task with metrics + residual plot
-
-[9] Final comparison table + deployment recommendation
-
-[10] Full pipeline saved with joblib.dump
-
-[11] Support assistant runs offline with mock LLM
-
-[12] FastAPI endpoint responds with grounded answers
-
-[13] Commit history shows feature branch merged into main
-
-Git Workflow
-At least one feature branch created, committed to ≥2 times, and merged back into main.
-
-Verified via git log --graph --all.
-
-Submission
-Submit exactly one public GitHub repository link containing:
-
-Root README.md (this file)
-
-/data_pipeline, /analytics, /support_assistant folders
-
-Requirements file(s)
-
-Commit history with branch/merge activity
-
-Code
+This is also useful if another Python installation is selected by the `python` command.
