@@ -3,7 +3,6 @@ requests
 beautifulsoup4
 pandas
 numpy
-sqlite3-binary
 
 # Visualization and EDA
 seaborn

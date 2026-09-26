@@ -3,7 +3,8 @@ import sqlite3
 
 def clean_books(df):
     rating_map = {"One":1,"Two":2,"Three":3,"Four":4,"Five":5}
-    df["price_gbp"] = df["price_gbp"].astype(float)
+    price_gbp = df["price_gbp"].astype("string").str.replace(r"[^\d.-]", "", regex=True)
+    df["price_gbp"] = pd.to_numeric(price_gbp, errors="raise")
     df["rating"] = df["star_rating"].map(rating_map)
     df["in_stock"] = df["availability"].str.contains("In stock")
     df["price_inr"] = df["price_gbp"] * 105.50

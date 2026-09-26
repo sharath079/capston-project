@@ -20,7 +20,6 @@ Example consolidated requirements:
 requests
 beautifulsoup4
 pandas
-sqlite3-binary
 seaborn
 matplotlib
 scikit-learn
@@ -32,10 +31,12 @@ fastapi
 uvicorn
 langgraph
 
-
 Install dependencies:
 ```bash
 pip install -r requirements.txt
+```
+
+`sqlite3` is included with Python and does not need to be installed separately.
 
 ## Running Each Module
 
