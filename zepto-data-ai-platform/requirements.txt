@@ -1,0 +1,25 @@
+# Core scraping and data pipeline
+requests
+beautifulsoup4
+pandas
+numpy
+sqlite3-binary
+
+# Visualization and EDA
+seaborn
+matplotlib
+
+# Machine learning and modeling
+scikit-learn
+imbalanced-learn
+joblib
+
+# GenAI support assistant
+sentence-transformers
+chromadb
+fastapi
+uvicorn
+langgraph
+
+# Optional utilities
+sqlalchemy
